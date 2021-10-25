@@ -72,21 +72,7 @@ export const logout = (id) => async (dispatch) => {
 export const fetchConversations = () => async (dispatch) => {
   try {
     const { data } = await axios.get("/api/conversations");
-    
-    // Messages are sorted here rather than in the component because
-    // the messages only come in the incorrect order when they're retrieved
-    // This way the sorting function which requires O(n log(n)) only runs once per conversation
-    // Otherwise the messages would be sorted every time the component renders a different conversation
-    const sortedData = [...data];
-    for (let i = 0; i < sortedData.length; i++) {
-      sortedData[i].messages = sortedData[i].messages.sort((firstMessage, secondMessage) => {
-        const firstMessageSentAt = new Date(firstMessage.createdAt);
-        const secondMessageSentAt = new Date(secondMessage.createdAt);
-        return firstMessageSentAt - secondMessageSentAt;
-      })
-    }
-
-    dispatch(gotConversations(sortedData));
+    dispatch(gotConversations(data));
   } catch (error) {
     console.error(error);
   }
