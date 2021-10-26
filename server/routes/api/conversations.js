@@ -67,10 +67,8 @@ router.get("/", async (req, res, next) => {
         convoJSON.otherUser.online = false;
       }
 
-      // set properties for notification count and latest message preview
       convoJSON.latestMessageText = convoJSON.messages[0].text;
 
-      // we need the conversations in DESC order but need the messages in ASC order
       convoJSON.messages.reverse();
       conversations[i] = convoJSON;
     }
