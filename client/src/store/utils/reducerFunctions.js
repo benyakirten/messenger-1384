@@ -11,15 +11,23 @@ export const addMessageToStore = (state, payload) => {
     return [newConvo, ...state];
   }
 
-  return state.map((convo) => {
-    if (convo.id === message.conversationId) {
-      convo.messages.push(message);
-      convo.latestMessageText = message.text;
-      return convo;
-    } else {
-      return convo;
-    }
-  });
+  // the conversation with the latest message should go to the top of the conversations
+  // sorting (the simpler solution) is O(n log(n)) but this solution is O(n)
+  const convoToUpdate = state.find(convo => convo.id === message.conversationId);
+  const updatedConvo = {
+    ...convoToUpdate,
+    latestMessageText: message.text,
+    messages: [
+      ...convoToUpdate.messages,
+      message
+    ]
+  }
+  const otherConvos = state.filter(convo => convo.id !== message.conversationId);
+
+  return [
+    updatedConvo,
+    ...otherConvos
+  ];
 };
 
 export const addOnlineUserToStore = (state, id) => {
@@ -69,10 +77,15 @@ export const addSearchedUsersToStore = (state, users) => {
 export const addNewConvoToStore = (state, recipientId, message) => {
   return state.map((convo) => {
     if (convo.otherUser.id === recipientId) {
-      convo.id = message.conversationId;
-      convo.messages.push(message);
-      convo.latestMessageText = message.text;
-      return convo;
+      return {
+        ...convo,
+        id: message.conversationId,
+        latestMessageText: message.text,
+        messages: [
+          ...convo.messages,
+          message
+        ]
+      }
     } else {
       return convo;
     }
