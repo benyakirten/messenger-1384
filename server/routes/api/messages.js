@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const { Op } = require("sequelize");
 const { Conversation, Message } = require("../../db/models");
 const onlineUsers = require("../../onlineUsers");
 
@@ -38,6 +39,51 @@ router.post("/", async (req, res, next) => {
       conversationId: conversation.id,
     });
     res.json({ message, sender });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// expects { conversationId } - to acknowledge an individual message is read
+// this route will only be used if a user is receiving messages in a conversation
+// and not changing back and forth to other conversations
+router.post("/read", async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+
+    const userId = req.user.id;
+    const { messageId, conversationId } = req.body;
+
+    const conversation = await Conversation.findOne({
+      where: {
+        id: conversationId,
+        [Op.or]: {
+          user1Id: userId,
+          user2Id: userId,
+        }
+      }
+    });
+
+    if (!conversation) {
+      return res.sendStatus(401);
+    }
+
+    const message = await Message.findOne({
+      where: {
+        id: messageId,
+        conversationId: conversation.id,
+      }
+    });
+
+    if (!message) {
+      return res.sendStatus(401);
+    }
+
+    message.read = true;
+    await message.save();
+    res.sendStatus(201);
   } catch (error) {
     next(error);
   }

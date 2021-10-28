@@ -1,27 +1,41 @@
 export const addMessageToStore = (state, payload) => {
-  const { message, sender } = payload;
+  const { message, sender, activeConversation, userId } = payload;
+
+  const newMessageCount = userId !== message.senderId ? 1 : 0;
+
   // if sender isn't null, that means the message needs to be put in a brand new convo
   if (sender !== null) {
     const newConvo = {
       id: message.conversationId,
       otherUser: sender,
       messages: [message],
+      unreadMessages: newMessageCount,
     };
     newConvo.latestMessageText = message.text;
     return [newConvo, ...state];
   }
 
-  // the conversation with the latest message should go to the top of the conversations
-  // sorting (the simpler solution) is O(n log(n)) but this solution is O(n)
   const convoToUpdate = state.find(convo => convo.id === message.conversationId);
+  
+  if (!convoToUpdate) {
+    // the find method can return undefined
+    // this check is to prevent the client from erroring out or becoming unresponsive
+    return state;
+  }
+
+  const updatedUnreadMessages = convoToUpdate.id === activeConversation
+    ? 0
+    : convoToUpdate.unreadMessages + newMessageCount;
+  
   const updatedConvo = {
     ...convoToUpdate,
+    unreadMessages: updatedUnreadMessages,
     latestMessageText: message.text,
     messages: [
       ...convoToUpdate.messages,
       message
     ]
-  }
+  };
   const otherConvos = state.filter(convo => convo.id !== message.conversationId);
 
   return [
@@ -91,3 +105,31 @@ export const addNewConvoToStore = (state, recipientId, message) => {
     }
   });
 };
+
+export const readAllMessagesFromConversation = (state, conversationId) => {
+  return state.map((convo) => {
+    if (
+      convo.id === conversationId
+      && convo.messages.length > 0
+      && convo.unreadMessages > 0
+    ) {
+      return {
+        ...convo,
+        unreadMessages: 0
+      }
+    }
+    return convo;
+  });
+}
+
+export const setReadToLatestMessage = (state, conversationId) => {
+  return state.map((convo) => {
+    if (convo.id === conversationId) {
+      return {
+        ...convo,
+        lastReadMessageIndex: convo.messages.length - 1
+      };
+    }
+    return convo;
+  })
+}

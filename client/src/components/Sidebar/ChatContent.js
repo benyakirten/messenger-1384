@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@material-ui/core";
+import { Box, Typography, Chip, Zoom } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
@@ -15,16 +15,20 @@ const useStyles = makeStyles((theme) => ({
   },
   previewText: {
     fontSize: 12,
-    color: "#9CADC8",
-    letterSpacing: -0.17,
+    fontWeight: ({ hasUnreadMessages }) => (hasUnreadMessages ? "600" : "400"),
+    color: ({ hasUnreadMessages }) =>
+      hasUnreadMessages ? "rgba(0, 0, 0, 0.87)" : "#9CADC8",
+    transition: 'all 0.4s ease',
   },
 }));
 
 const ChatContent = (props) => {
-  const classes = useStyles();
-
   const { conversation } = props;
   const { latestMessageText, otherUser } = conversation;
+
+  const hasUnreadMessages = conversation.unreadMessages > 0;
+
+  const classes = useStyles({ hasUnreadMessages });
 
   return (
     <Box className={classes.root}>
@@ -36,6 +40,9 @@ const ChatContent = (props) => {
           {latestMessageText}
         </Typography>
       </Box>
+      <Zoom in={hasUnreadMessages}>
+        <Chip label={conversation.unreadMessages} color="primary" />
+      </Zoom>
     </Box>
   );
 };

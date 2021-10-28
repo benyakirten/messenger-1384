@@ -5,6 +5,7 @@ import {
   addConversation,
   setNewMessage,
   setSearchedUsers,
+  setConversationRead,
 } from "../conversations";
 import { gotUser, setFetchingStatus } from "../user";
 
@@ -91,6 +92,45 @@ const sendMessage = (data, body) => {
   });
 };
 
+const transmitConversationRead = (conversationId) => {
+  socket.emit("conversation-read", conversationId);
+};
+
+// attach the current active conversation and userId to the new message before it gets to the reducer util function
+export const receiveNewMessage = (message, sender) => (dispatch, getGlobalState) => {
+  const { activeConversation, user, conversations } = getGlobalState();
+  const activeConvo = conversations.find(convo => convo.otherUser.username === activeConversation);
+  const activeConvoId = activeConvo && activeConvo.id;
+  if (activeConvoId === message.conversationId && user.id !== message.senderId) {
+    dispatch(readMessage(message.id, message.conversationId));
+  }
+  dispatch(setNewMessage(message, sender, activeConvoId, user ? user.id : null));
+}
+
+export const readConversation = (conversationId) => async (dispatch) => {
+  try {
+    await axios.post("/api/conversations/read", {
+      conversationId
+    });
+    transmitConversationRead(conversationId);
+    dispatch(setConversationRead(conversationId));
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export const readMessage = (messageId, conversationId) => async (dispatch) => {
+  try {
+    await axios.post("/api/messages/read", {
+      messageId,
+      conversationId
+    });
+    transmitConversationRead(conversationId);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 // message format to send: {recipientId, text, conversationId}
 // conversationId will be set to null if its a brand new conversation
 export const postMessage = (body) => async (dispatch) => {
@@ -100,7 +140,7 @@ export const postMessage = (body) => async (dispatch) => {
     if (!body.conversationId) {
       dispatch(addConversation(body.recipientId, data.message));
     } else {
-      dispatch(setNewMessage(data.message));
+      dispatch(receiveNewMessage(data.message));
     }
 
     sendMessage(data, body);

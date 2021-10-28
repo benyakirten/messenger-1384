@@ -4,6 +4,8 @@ import {
   addSearchedUsersToStore,
   removeOfflineUserFromStore,
   addMessageToStore,
+  readAllMessagesFromConversation,
+  setReadToLatestMessage,
 } from "./utils/reducerFunctions";
 
 // ACTIONS
@@ -15,6 +17,8 @@ const REMOVE_OFFLINE_USER = "REMOVE_OFFLINE_USER";
 const SET_SEARCHED_USERS = "SET_SEARCHED_USERS";
 const CLEAR_SEARCHED_USERS = "CLEAR_SEARCHED_USERS";
 const ADD_CONVERSATION = "ADD_CONVERSATION";
+const SET_CONVERSATION_READ = "SET_CONVERSATION_READ";
+const MOVE_LAST_READ_INDEX = "MOVE_LAST_READ_INDEX";
 
 // ACTION CREATORS
 
@@ -25,10 +29,15 @@ export const gotConversations = (conversations) => {
   };
 };
 
-export const setNewMessage = (message, sender) => {
+export const setNewMessage = (message, sender, activeConversation, userId) => {
   return {
     type: SET_MESSAGE,
-    payload: { message, sender: sender || null },
+    payload: {
+      message,
+      sender: sender || null,
+      activeConversation,
+      userId
+    },
   };
 };
 
@@ -67,6 +76,21 @@ export const addConversation = (recipientId, newMessage) => {
   };
 };
 
+export const setConversationRead = (conversationId) => {
+  return {
+    type: SET_CONVERSATION_READ,
+    payload: { conversationId }
+  };
+};
+
+export const moveLastReadIndex = (conversationId) => {
+  console.log(conversationId);
+  return {
+    type: MOVE_LAST_READ_INDEX,
+    payload: { conversationId }
+  }
+}
+
 // REDUCER
 
 const reducer = (state = [], action) => {
@@ -91,6 +115,10 @@ const reducer = (state = [], action) => {
         action.payload.recipientId,
         action.payload.newMessage
       );
+    case SET_CONVERSATION_READ:
+      return readAllMessagesFromConversation(state, action.payload.conversationId);
+    case MOVE_LAST_READ_INDEX:
+      return setReadToLatestMessage(state, action.payload.conversationId);
     default:
       return state;
   }
