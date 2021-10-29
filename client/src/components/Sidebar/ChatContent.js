@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@material-ui/core";
+import { Box, Typography, Badge, Zoom } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
@@ -13,18 +13,29 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "bold",
     letterSpacing: -0.2,
   },
-  previewText: {
-    fontSize: 12,
-    color: "#9CADC8",
-    letterSpacing: -0.17,
+  newPreviewText: {
+    fontSize: theme.typography.fontSize,
+    fontWeight: "bold",
+    color: theme.palette.common.black,
+  },
+  seenPreviewText: {
+    fontSize: theme.typography.fontSize,
+    fontWeight: "normal",
+    color: theme.palette.common.faded,
+  },
+  unreadMessageBox: {
+    marginRight: theme.spacing(2),
+    marginTop: theme.spacing(),
   },
 }));
 
 const ChatContent = (props) => {
-  const classes = useStyles();
-
   const { conversation } = props;
   const { latestMessageText, otherUser } = conversation;
+
+  const hasUnreadMessages = conversation.unreadMessages > 0;
+
+  const classes = useStyles();
 
   return (
     <Box className={classes.root}>
@@ -32,10 +43,18 @@ const ChatContent = (props) => {
         <Typography className={classes.username}>
           {otherUser.username}
         </Typography>
-        <Typography className={classes.previewText}>
+        <Typography className={hasUnreadMessages ? classes.newPreviewText : classes.seenPreviewText}>
           {latestMessageText}
         </Typography>
       </Box>
+      <Zoom in={hasUnreadMessages}>
+        <Box className={classes.unreadMessageBox}>
+          <Badge
+            badgeContent={conversation.unreadMessages}
+            color="primary"
+          ></Badge>
+        </Box>
+      </Zoom>
     </Box>
   );
 };

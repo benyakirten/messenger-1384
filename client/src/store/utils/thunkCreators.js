@@ -5,6 +5,7 @@ import {
   addConversation,
   setNewMessage,
   setSearchedUsers,
+  setConversationRead,
 } from "../conversations";
 import { gotUser, setFetchingStatus } from "../user";
 
@@ -91,6 +92,35 @@ const sendMessage = (data, body) => {
   });
 };
 
+const transmitConversationRead = (conversationId) => {
+  socket.emit("conversation-read", conversationId);
+};
+
+// attach userId to the new message before it gets to the reducer util function
+// and check if the message belongs to the current active conversation
+export const receiveNewMessage = (message, sender) => (dispatch, getGlobalState) => {
+  const { activeConversation, user, conversations } = getGlobalState();
+  const activeConvo = conversations.find(convo => convo.otherUser.username === activeConversation);
+  const activeConvoId = activeConvo?.id;
+  dispatch(setNewMessage(message, sender, user ? user.id : null));
+
+  if (activeConvoId === message.conversationId && user.id !== message.senderId) {
+    dispatch(readMessagesFromConversation(message.conversationId));
+  }
+}
+
+export const readMessagesFromConversation = (conversationId) => async (dispatch) => {
+  try {
+    await axios.patch("/api/messages/read", {
+      conversationId
+    });
+    transmitConversationRead(conversationId);
+    dispatch(setConversationRead(conversationId));
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 // message format to send: {recipientId, text, conversationId}
 // conversationId will be set to null if its a brand new conversation
 export const postMessage = (body) => async (dispatch) => {
@@ -100,7 +130,7 @@ export const postMessage = (body) => async (dispatch) => {
     if (!body.conversationId) {
       dispatch(addConversation(body.recipientId, data.message));
     } else {
-      dispatch(setNewMessage(data.message));
+      dispatch(receiveNewMessage(data.message));
     }
 
     sendMessage(data, body);

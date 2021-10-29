@@ -1,27 +1,37 @@
 export const addMessageToStore = (state, payload) => {
-  const { message, sender } = payload;
+  const { message, sender, userId } = payload;
+
+  const newMessageCount = userId !== message.senderId ? 1 : 0;
+
   // if sender isn't null, that means the message needs to be put in a brand new convo
   if (sender !== null) {
     const newConvo = {
       id: message.conversationId,
       otherUser: sender,
       messages: [message],
+      unreadMessages: newMessageCount,
     };
     newConvo.latestMessageText = message.text;
     return [newConvo, ...state];
   }
 
-  // the conversation with the latest message should go to the top of the conversations
-  // sorting (the simpler solution) is O(n log(n)) but this solution is O(n)
   const convoToUpdate = state.find(convo => convo.id === message.conversationId);
+  
+  if (!convoToUpdate) {
+    // this check is to prevent the client from erroring or becoming unresponsive
+    // if convoToUpdate is undefined
+    return state;
+  }
+  
   const updatedConvo = {
     ...convoToUpdate,
+    unreadMessages: convoToUpdate.unreadMessages + newMessageCount,
     latestMessageText: message.text,
     messages: [
       ...convoToUpdate.messages,
       message
     ]
-  }
+  };
   const otherConvos = state.filter(convo => convo.id !== message.conversationId);
 
   return [
@@ -89,5 +99,18 @@ export const addNewConvoToStore = (state, recipientId, message) => {
     } else {
       return convo;
     }
+  });
+};
+
+export const readAllMessagesFromConversation = (state, conversationId) => {
+  return state.map((convo) => {
+    if (convo.id === conversationId) {
+      return {
+        ...convo,
+        unreadMessages: 0,
+        lastReadMessageIndex: convo.messages.length - 1
+      };
+    }
+    return convo;
   });
 };

@@ -70,8 +70,21 @@ router.get("/", async (req, res, next) => {
       // set properties for notification count and latest message preview
       convoJSON.latestMessageText = convoJSON.messages[0].text;
 
-      // we need the conversations in DESC order but need the messages in ASC order
+      const unreadMessages = convoJSON.messages.reduce(
+        (acc, next) => (next.senderId !== userId && !next.read ? acc + 1 : acc),
+        0
+      );
+      convoJSON.unreadMessages = unreadMessages;
+      
+      let lastReadMessageIndex = convoJSON.messages.findIndex(convo => convo.read);
+      if (lastReadMessageIndex !== -1) {
+        // Invert the index order
+        lastReadMessageIndex = (convoJSON.messages.length - lastReadMessageIndex) - 1;
+      }
+      convoJSON.lastReadMessageIndex = unreadMessages === 0 ? lastReadMessageIndex : -1;
+
       convoJSON.messages.reverse();
+
       conversations[i] = convoJSON;
     }
 
