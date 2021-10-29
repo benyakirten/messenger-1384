@@ -101,7 +101,7 @@ const transmitConversationRead = (conversationId) => {
 export const receiveNewMessage = (message, sender) => (dispatch, getGlobalState) => {
   const { activeConversation, user, conversations } = getGlobalState();
   const activeConvo = conversations.find(convo => convo.otherUser.username === activeConversation);
-  const activeConvoId = activeConvo && activeConvo.id;
+  const activeConvoId = activeConvo?.id;
   dispatch(setNewMessage(message, sender, user ? user.id : null));
 
   if (activeConvoId === message.conversationId && user.id !== message.senderId) {

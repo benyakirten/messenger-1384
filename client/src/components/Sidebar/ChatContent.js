@@ -52,7 +52,7 @@ const ChatContent = (props) => {
           <Badge
             badgeContent={conversation.unreadMessages}
             color="primary"
-          />
+          ></Badge>
         </Box>
       </Zoom>
     </Box>

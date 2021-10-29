@@ -14,13 +14,13 @@ const Messages = (props) => {
 
         return message.senderId === userId ? (
           lastReadMessageIndex === idx ? (
-            <>
-              <SenderBubble key={message.id} text={message.text} time={time} />
+            <React.Fragment key={message.id}>
+              <SenderBubble text={message.text} time={time} />
                 <LastReadAvatar
                   alt={otherUser.username}
                   photoUrl={otherUser.photoUrl}
                 />
-            </>
+            </React.Fragment>
           ) : (
             <SenderBubble key={message.id} text={message.text} time={time} />
           )
