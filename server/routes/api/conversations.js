@@ -94,39 +94,4 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.post("/read", async (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.sendStatus(401);
-    }
-
-    const userId = req.user.id;
-    const { conversationId } = req.body;
-
-    const conversation = await Conversation.findOne({
-      where: {
-        id: conversationId,
-        [Op.or]: {
-          user1Id: userId,
-          user2Id: userId,
-        }
-      }
-    });
-
-    if (!conversation) {
-      res.sendStatus(401);
-    }
-
-    await Message.update({ read: true }, {
-      where: {
-        conversationId
-      }
-    });
-
-    res.sendStatus(201);
-  } catch (error) {
-    next(error);
-  }
-});
-
 module.exports = router;

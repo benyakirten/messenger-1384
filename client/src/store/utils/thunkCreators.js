@@ -96,36 +96,26 @@ const transmitConversationRead = (conversationId) => {
   socket.emit("conversation-read", conversationId);
 };
 
-// attach the current active conversation and userId to the new message before it gets to the reducer util function
+// attach userId to the new message before it gets to the reducer util function
+// and check if the message belongs to the current active conversation
 export const receiveNewMessage = (message, sender) => (dispatch, getGlobalState) => {
   const { activeConversation, user, conversations } = getGlobalState();
   const activeConvo = conversations.find(convo => convo.otherUser.username === activeConversation);
   const activeConvoId = activeConvo && activeConvo.id;
+  dispatch(setNewMessage(message, sender, user ? user.id : null));
+
   if (activeConvoId === message.conversationId && user.id !== message.senderId) {
-    dispatch(readMessage(message.id, message.conversationId));
+    dispatch(readMessagesFromConversation(message.conversationId));
   }
-  dispatch(setNewMessage(message, sender, activeConvoId, user ? user.id : null));
 }
 
-export const readConversation = (conversationId) => async (dispatch) => {
+export const readMessagesFromConversation = (conversationId) => async (dispatch) => {
   try {
-    await axios.post("/api/conversations/read", {
+    await axios.patch("/api/messages/read", {
       conversationId
     });
     transmitConversationRead(conversationId);
     dispatch(setConversationRead(conversationId));
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-export const readMessage = (messageId, conversationId) => async (dispatch) => {
-  try {
-    await axios.post("/api/messages/read", {
-      messageId,
-      conversationId
-    });
-    transmitConversationRead(conversationId);
   } catch (error) {
     console.error(error);
   }

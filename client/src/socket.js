@@ -3,7 +3,7 @@ import store from "./store";
 import {
   removeOfflineUser,
   addOnlineUser,
-  moveLastReadIndex,
+  setConversationRead,
 } from "./store/conversations";
 import { receiveNewMessage } from "./store/utils/thunkCreators";
 
@@ -24,7 +24,7 @@ socket.on("connect", () => {
   });
 
   socket.on("conversation-read", (conversationId) => {
-    store.dispatch(moveLastReadIndex(conversationId));
+    store.dispatch(setConversationRead(conversationId));
   })
 });
 

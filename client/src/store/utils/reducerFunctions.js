@@ -1,5 +1,5 @@
 export const addMessageToStore = (state, payload) => {
-  const { message, sender, activeConversation, userId } = payload;
+  const { message, sender, userId } = payload;
 
   const newMessageCount = userId !== message.senderId ? 1 : 0;
 
@@ -18,18 +18,14 @@ export const addMessageToStore = (state, payload) => {
   const convoToUpdate = state.find(convo => convo.id === message.conversationId);
   
   if (!convoToUpdate) {
-    // the find method can return undefined
-    // this check is to prevent the client from erroring out or becoming unresponsive
+    // this check is to prevent the client from erroring or becoming unresponsive
+    // if convoToUpdate is undefined
     return state;
   }
-
-  const updatedUnreadMessages = convoToUpdate.id === activeConversation
-    ? 0
-    : convoToUpdate.unreadMessages + newMessageCount;
   
   const updatedConvo = {
     ...convoToUpdate,
-    unreadMessages: updatedUnreadMessages,
+    unreadMessages: convoToUpdate.unreadMessages + newMessageCount,
     latestMessageText: message.text,
     messages: [
       ...convoToUpdate.messages,
@@ -108,28 +104,13 @@ export const addNewConvoToStore = (state, recipientId, message) => {
 
 export const readAllMessagesFromConversation = (state, conversationId) => {
   return state.map((convo) => {
-    if (
-      convo.id === conversationId
-      && convo.messages.length > 0
-      && convo.unreadMessages > 0
-    ) {
-      return {
-        ...convo,
-        unreadMessages: 0
-      }
-    }
-    return convo;
-  });
-}
-
-export const setReadToLatestMessage = (state, conversationId) => {
-  return state.map((convo) => {
     if (convo.id === conversationId) {
       return {
         ...convo,
+        unreadMessages: 0,
         lastReadMessageIndex: convo.messages.length - 1
       };
     }
     return convo;
-  })
-}
+  });
+};

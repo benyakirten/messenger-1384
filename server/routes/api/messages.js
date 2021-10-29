@@ -44,17 +44,15 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// expects { conversationId } - to acknowledge an individual message is read
-// this route will only be used if a user is receiving messages in a conversation
-// and not changing back and forth to other conversations
-router.post("/read", async (req, res, next) => {
+// expects {conversationId} in body
+router.patch("/read", async (req, res, next) => {
   try {
     if (!req.user) {
       return res.sendStatus(401);
     }
 
     const userId = req.user.id;
-    const { messageId, conversationId } = req.body;
+    const { conversationId } = req.body;
 
     const conversation = await Conversation.findOne({
       where: {
@@ -67,23 +65,16 @@ router.post("/read", async (req, res, next) => {
     });
 
     if (!conversation) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
-    const message = await Message.findOne({
+    await Message.update({ read: true }, {
       where: {
-        id: messageId,
-        conversationId: conversation.id,
+        conversationId
       }
     });
 
-    if (!message) {
-      return res.sendStatus(401);
-    }
-
-    message.read = true;
-    await message.save();
-    res.sendStatus(201);
+    res.sendStatus(204);
   } catch (error) {
     next(error);
   }
